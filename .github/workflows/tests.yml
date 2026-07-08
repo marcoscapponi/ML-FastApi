@@ -1,0 +1,44 @@
+name: Run tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: ml_api
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --with dev
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:pass@localhost:5432/ml_api
+          SECRET_KEY: test-secret-key
+        run: |
+          alembic upgrade head
+      - name: Test with pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:pass@localhost:5432/ml_api
+          SECRET_KEY: test-secret-key
+        run: |
+          pytest -v
