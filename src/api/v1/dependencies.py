@@ -1,0 +1,38 @@
+"""Dependencias reutilizables para la API v1"""
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from src.core.security  import decode_access_token
+from src.db.session import get_db
+from src.db.base import User
+from src.schemas.token import TokenPayload
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+async def get_current_user(
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_db)
+) -> User:
+    """Obtiene el usuario actual a partir del token JWT."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    payload = decode_access_token(token)
+    if payload is None:
+        raise credentials_exception
+    
+    email: str = payload.get("sub")
+    if email is None:
+        raise credentials_exception
+    
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if user is None or not user.is_active:
+        raise credentials_exception
+
+    return user

@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+.git
+.venv
+venv
+.env
+.idea
+.vscodee
+docker-data
+*.egg-info
+dist
+build

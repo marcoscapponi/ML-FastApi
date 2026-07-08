@@ -1,0 +1,22 @@
+.env
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+src/models/artifacts/
+
+.vscode/
+.idea/
+
+.DS_Store
+Thumbs.db
+
+docker-data/ #opcional, si no quiers subir datos de volumenes
+
+# Alembic (algunos ignoran las carpetas de versiones generadas)
+# alembic/versions/*.pyc
